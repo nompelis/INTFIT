@@ -654,10 +654,11 @@ int inTFit_MultiFit::form( void )
 #endif
                // assign matrix element
                double ee = fit->evalProd( m, k, t );
-               amat[ ntt*ne + ntt*m + ntt + k ] = ee;
+               amat[ ntt*ne + ne*m + ntt + k ] = ee;
             }
             // assign RHS vector element
             double rr = y[i] * fit->evalTerm( m, t );
+            rhs[ ntt + m ] = rr;
 #ifdef _DEBUG3_
             if( i == is )
                for(int k=ntt+nt;k<ne;++k)
@@ -672,6 +673,15 @@ int inTFit_MultiFit::form( void )
       // advance term offset
       ntt += nt;
    }
+#ifdef _DEBUG3_
+   fprintf( stdout, " [%s]  Linear system \n",CLASS);
+   for(int n=0;n<ne;++n) {
+      for(int m=0;m<ne;++m) {
+         fprintf( stdout, " %16.9e", amat[ n*ne + m ] );
+      }
+      fprintf( stdout, "    %16.9e\n", rhs[ n ] );
+   }
+#endif
 
    return 0;
 }
