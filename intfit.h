@@ -46,6 +46,14 @@
 extern "C" {
 #endif
 
+enum inTerm_type {
+   TERM_NULL,
+   TERM_CONST,
+   TERM_MONOMIAL,
+   TERM_LOG,
+   TERM_EXP,
+};
+
 
 //
 // object representing a term in the approximation
@@ -53,14 +61,105 @@ extern "C" {
 
 class inTFit_Term {
  public:
-   inTFit_Term();
+   inTFit_Term( inTerm_type type_, int order_ );
    ~inTFit_Term();
+
+   int getOrder( void ) const;
+   inTerm_type getType( void ) const;
+   double eval( double t ) const;
+   double evalDer( double t ) const;
+   double evalInt( double t ) const;
 
  protected:
 
  private:
+   inTerm_type type;
+   int order;
 
 };
+
+
+//
+// object representing a fit to data that comprises of the degrees of
+// freedom and the terms in the approximation
+//
+
+class inTFit_Fit {
+ public:
+   inTFit_Fit();
+   ~inTFit_Fit();
+
+   int setBounds( double xstart, double xend );
+   int getBounds( double & xstart, double & xend );
+   int setTerms( const char* term_string );
+   int getNumTerms( void ) const;
+   int finalize();
+   void clear( void );
+   double evalProd( int i, int j, double t ) const;
+
+ protected:
+
+ private:
+   double xs,xe;
+   int ibound;
+
+   std::vector< inTFit_Term > terms;
+   int num_terms;
+// std::vector< double > values;
+
+   // methods
+   int parseTermsString( const char* );
+   int parseTerm( const char*, inTerm_type* type_, int* order_ );
+   int registerTerm( inTerm_type type_, int order_ );
+
+#ifdef _DEBUG_
+   char* CLASS = (char*) "inTFit_Fit";
+#endif
+};
+
+
+//
+// object representing a multi-segment fit
+//
+
+class inTFit_MultiFit {
+ public:
+   inTFit_MultiFit();
+   ~inTFit_MultiFit();
+
+   int setBounds( double xstart, double xend );
+   int addFit( inTFit_Fit & fit_ );
+   int finalize();
+   void clear( void );
+   int storeData( long size, const double* x_, const double* y_ );
+
+   int form( void );
+
+ protected:
+
+ private:
+   double xs,xe;
+   int ibound;
+
+   std::vector< inTFit_Fit > fits;
+   std::vector< double > lows;
+   std::vector< double > highs;
+   std::vector< long > idx_lo, idx_hi;
+   int num_ranges;
+
+   long num_data;
+   std::vector< double > x,y;
+
+   int findIndices();
+
+   int ne;
+   double *amat, *rhs;
+
+#ifdef _DEBUG_
+   char* CLASS = (char*) "inTFit_MultiFit";
+#endif
+};
+
 
 
 
