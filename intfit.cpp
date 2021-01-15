@@ -394,6 +394,7 @@ level_two_const:
    if( ilen > 1 ) {   // specified something longer than "1"
       return -301;
    }
+   goto level_three;
    return -999;   // guard from any GOTO fuckup by throwing bad return...
 
 level_two_monomial:
