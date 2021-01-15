@@ -14,5 +14,5 @@ CXXOPTS = -g -Wall -fPIC  -O2
 #CXXOPTS = -fPIC -g -Mbounds
 
 ### debug level
-DEBUG = -D   _DEBUG_  -D NO_DEBUG2_
+DEBUG = -D   _DEBUG_  -D NO_DEBUG2_  -D   _DEBUG3_
 

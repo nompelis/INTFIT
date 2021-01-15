@@ -96,6 +96,7 @@ class inTFit_Fit {
    int finalize();
    void clear( void );
    double evalProd( int i, int j, double t ) const;
+   __inline double evalTerm( int i, double t ) const;
 
  protected:
 

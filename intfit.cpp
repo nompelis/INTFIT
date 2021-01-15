@@ -476,6 +476,12 @@ double inTFit_Fit::evalProd( int i, int j, double t ) const
 }
 
 
+__inline double inTFit_Fit::evalTerm( int i, double t ) const
+{
+   return terms[i].eval( t );
+}
+
+
 //
 // Multi-fit class
 //
@@ -636,11 +642,29 @@ int inTFit_MultiFit::form( void )
          double t = x[i];
 
          for(int m=0;m<nt;++m) {
+#ifdef _DEBUG3_
+            if( i == is )
+               for(int k=0;k<ntt;++k)
+                  fprintf( stdout, "- ");
+#endif
             for(int k=0;k<nt;++k) {
-               double ee = fit->evalProd( m, k, t );
+#ifdef _DEBUG3_
+               if( i == is )
+                  fprintf( stdout, "X ");
+#endif
                // assign matrix element
+               double ee = fit->evalProd( m, k, t );
+               amat[ ntt*ne + ntt*m + ntt + k ] = ee;
             }
             // assign RHS vector element
+            double rr = y[i] * fit->evalTerm( m, t );
+#ifdef _DEBUG3_
+            if( i == is )
+               for(int k=ntt+nt;k<ne;++k)
+                  fprintf( stdout, "- ");
+            if( i == is )
+               fprintf( stdout, "\n");
+#endif
          }
 
       }
