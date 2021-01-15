@@ -745,6 +745,10 @@ int inTFit_MultiFit::form( void )
 #ifdef _DEBUG_
    fprintf( stdout, " [%s]  Forming...\n",CLASS);
 #endif
+   // clean-up data
+   for(int n=0;n<ne*ne;++n) amat[n] = 0.0;
+   for(int n=0;n<ne;++n) rhs[n] = 0.0;
+
    // sweep over ranges (fit segments)
    int ntt=0;    // term offset
    for(int n=0;n<num_ranges;++n) {
@@ -769,11 +773,11 @@ int inTFit_MultiFit::form( void )
 #endif
                // assign matrix element
                double ee = fit->evalProd( m, k, t );
-               amat[ ntt*ne + ne*m + ntt + k ] = ee;
+               amat[ ntt*ne + ne*m + ntt + k ] += ee;
             }
             // assign RHS vector element
             double rr = y[i] * fit->evalTerm( m, t );
-            rhs[ ntt + m ] = rr;
+            rhs[ ntt + m ] += rr;
 #ifdef _DEBUG3_
             if( i == is )
                for(int k=ntt+nt;k<ne;++k)
