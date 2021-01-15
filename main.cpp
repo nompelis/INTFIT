@@ -57,7 +57,7 @@ int main( int argc, char *argv[] )
    fit1.clear();
 
    fit1.setBounds( xhigh/2.0, xhigh );
-   fit1.setTerms( "X   X^2 EXP(X)  " );
+   fit1.setTerms( "X   X^2 LOG(X)  " );
    fit1.finalize();
    printf("TEST RESULT: %lf \n", fit1.evalProd( 0, 2, 1.0 ) ); // HACK
    printf("Number of terms: %d \n", fit1.getNumTerms() );
