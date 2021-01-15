@@ -46,6 +46,69 @@ extern "C" {
 
 
 //
+// A function to perform Gaussian elimination with pivoting
+// (This is taken from IN's "inUtils" collrection. This is _not_ Saad's
+// form, but the textbook version.)
+//
+
+int inUtils_GaussianElimination( int ne, double* a, double* c, double* d )
+{
+   double rm,ra,ba,rl;
+   int i,j,k,il;
+
+// loop over columns and skip previous rows
+
+   for(j=0;j<ne;++j) {                       // loop over columns
+
+      rm = 0.0;                              // init to minimum
+      il = j;                                // initialize to running top
+      for(i=j;i<ne;++i) {                    // loop over remaining rows
+         ra = fabs(a[i*ne + j]);             // get magnitude of term
+         if(ra > rm) {                       // new value is larger
+            il = i;                          // store row number
+            rm = ra;                         // update maximum magnitude
+         }
+      }
+
+      for(k=0;k<ne;++k) {
+         d[k] = a[il*ne + k];                // store elements of large row
+      }
+      ba      = c[il];                       // store RHS of large row
+      for(k=0;k<ne;++k) {
+         a[il*ne + k] = a[j*ne + k];         // replace elem. of large w/ top
+      }
+      c[il]      = c[j];                     // replace RHS of large row w/ t
+      for(k=0;k<ne;++k) {
+         a[j*ne + k] = d[k];                 // put elem. of large row to top
+      }
+      c[j]      = ba;                        // put RHS of large row to top
+
+      ra = 1.0/d[j];                         // get inverse of large row's nz
+      for(i=j+1;i<ne;++i) {                  // work on remaining rows
+         rl = a[i*ne + j]*ra;                // form equation multiplier
+         a[i*ne + j] = 0.0;                  // zero identically
+         for(k=j+1;k<ne;++k) {               // loop over lower rows elements
+            a[i*ne + k] = a[i*ne + k] - rl*d[k];  // subtract large row
+         }
+         c[i] = c[i] - rl*ba;                // subtract large RHS from RHS
+      }
+   }
+
+// back-substitution
+   c[ne-1] = c[ne-1]/a[(ne-1)*ne + ne-1];    // invert for last element
+   for(i=ne-2;i>=0;--i) {                    // eliminate backwards
+      ra = 0.0;                              // init the accumulated sum
+      for(k=ne-1;k>=i+1;--k) {               // backward sum of solved elems
+         ra = ra + a[i*ne + k]*c[k];         // accumulate sum of solved
+      }
+      c[i] = (c[i] - ra)/a[i*ne + i];        // solve for element
+   }
+
+   return 0;
+}
+
+
+//
 // Term class
 //
 
@@ -504,6 +567,7 @@ inTFit_MultiFit::inTFit_MultiFit()
    ne = 0;
    amat = NULL;
    rhs = NULL;
+   tp = NULL;
 }
 
 
@@ -514,6 +578,7 @@ inTFit_MultiFit::~inTFit_MultiFit()
 #endif
    if( amat == NULL ) free( amat );
    if( rhs == NULL ) free( rhs );
+   if( tp == NULL ) free( tp );
 }
 
 
@@ -586,14 +651,16 @@ int inTFit_MultiFit::finalize()
    // allocate memory for the linear system
    amat = (double *) malloc( ((size_t) (ne*ne)) * sizeof(double) );
    rhs = (double *) malloc( ((size_t) ne) * sizeof(double) );
-   if( amat == NULL || rhs == NULL ) {
+   tp = (double *) malloc( ((size_t) ne) * sizeof(double) );
+   if( amat == NULL || rhs == NULL || tp == NULL ) {
       if( amat != NULL ) free( amat );
       amat = NULL;
       if( rhs != NULL ) free( rhs );
       rhs = NULL;
+      if( tp != NULL ) free( tp );
+      tp = NULL;
       return -1;
    }
-
 
    return 0;
 }
@@ -627,12 +694,16 @@ int inTFit_MultiFit::storeData( long size,
 int inTFit_MultiFit::compute( void )
 {
 #ifdef _DEBUG_
-   fprintf( stdout, " [%s]  Forming...\n",CLASS);
+   fprintf( stdout, " [%s]  Computing...\n",CLASS);
 #endif
-   if( ne <= 0 || amat == NULL || rhs == NULL ) return 1;
+   if( ne <= 0 || amat == NULL || rhs == NULL || tp == NULL ) return 1;
 
    (void) form();
-
+   (void) inUtils_GaussianElimination( ne, amat, rhs, tp );
+#ifdef _DEBUG_
+   fprintf( stdout, " [%s]  Solution \n",CLASS);
+   for(int n=0;n<ne;++n) fprintf( stdout, " n=%d   %16.9e \n", n, rhs[n] );
+#endif
 
 
    return 0;
@@ -757,17 +828,20 @@ int inTFit_MultiFit::form( void )
       // sweep over the points of this segment
       inTFit_Fit* fit = &( fits[n] );
       long is = idx_lo[n], ie = idx_hi[n];
+#ifdef _DEBUG3_
+      fprintf( stdout, "    Segment %d, index bounds %ld, %ld \n", n, is, ie );
+#endif
       for(long i=is;i<ie;++i) {
          double t = x[i];
 
          for(int m=0;m<nt;++m) {
-#ifdef _DEBUG3_
+#ifdef _DEBUG2_
             if( i == is )
                for(int k=0;k<ntt;++k)
                   fprintf( stdout, "- ");
 #endif
             for(int k=0;k<nt;++k) {
-#ifdef _DEBUG3_
+#ifdef _DEBUG2_
                if( i == is )
                   fprintf( stdout, "X ");
 #endif
@@ -778,7 +852,7 @@ int inTFit_MultiFit::form( void )
             // assign RHS vector element
             double rr = y[i] * fit->evalTerm( m, t );
             rhs[ ntt + m ] += rr;
-#ifdef _DEBUG3_
+#ifdef _DEBUG2_
             if( i == is )
                for(int k=ntt+nt;k<ne;++k)
                   fprintf( stdout, "- ");

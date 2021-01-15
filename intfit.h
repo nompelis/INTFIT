@@ -155,7 +155,7 @@ class inTFit_MultiFit {
    int form( void );
 
    int ne;
-   double *amat, *rhs;
+   double *amat, *rhs, *tp;
 
 #ifdef _DEBUG_
    char* CLASS = (char*) "inTFit_MultiFit";
