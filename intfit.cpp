@@ -623,65 +623,16 @@ int inTFit_MultiFit::storeData( long size,
 }
 
 
-int inTFit_MultiFit::form( void )
+int inTFit_MultiFit::compute( void )
 {
 #ifdef _DEBUG_
    fprintf( stdout, " [%s]  Forming...\n",CLASS);
 #endif
    if( ne <= 0 || amat == NULL || rhs == NULL ) return 1;
 
-   // sweep over ranges (fit segments)
-   int ntt=0;    // term offset
-   for(int n=0;n<num_ranges;++n) {
-      int nt = fits[n].getNumTerms();
+   (void) form();
 
-      // sweep over the points of this segment
-      inTFit_Fit* fit = &( fits[n] );
-      long is = idx_lo[n], ie = idx_hi[n];
-      for(long i=is;i<ie;++i) {
-         double t = x[i];
 
-         for(int m=0;m<nt;++m) {
-#ifdef _DEBUG3_
-            if( i == is )
-               for(int k=0;k<ntt;++k)
-                  fprintf( stdout, "- ");
-#endif
-            for(int k=0;k<nt;++k) {
-#ifdef _DEBUG3_
-               if( i == is )
-                  fprintf( stdout, "X ");
-#endif
-               // assign matrix element
-               double ee = fit->evalProd( m, k, t );
-               amat[ ntt*ne + ne*m + ntt + k ] = ee;
-            }
-            // assign RHS vector element
-            double rr = y[i] * fit->evalTerm( m, t );
-            rhs[ ntt + m ] = rr;
-#ifdef _DEBUG3_
-            if( i == is )
-               for(int k=ntt+nt;k<ne;++k)
-                  fprintf( stdout, "- ");
-            if( i == is )
-               fprintf( stdout, "\n");
-#endif
-         }
-
-      }
-
-      // advance term offset
-      ntt += nt;
-   }
-#ifdef _DEBUG3_
-   fprintf( stdout, " [%s]  Linear system \n",CLASS);
-   for(int n=0;n<ne;++n) {
-      for(int m=0;m<ne;++m) {
-         fprintf( stdout, " %16.9e", amat[ n*ne + m ] );
-      }
-      fprintf( stdout, "    %16.9e\n", rhs[ n ] );
-   }
-#endif
 
    return 0;
 }
@@ -783,6 +734,68 @@ usleep(300000);
    for(int n=0;n<num_ranges;++n) {
       fprintf( stdout, "  %d:  [%6ld <-> %6ld ] \n", n, idx_lo[n], idx_hi[n] );
    }
+
+   return 0;
+}
+
+
+int inTFit_MultiFit::form( void )
+{
+#ifdef _DEBUG_
+   fprintf( stdout, " [%s]  Forming...\n",CLASS);
+#endif
+   // sweep over ranges (fit segments)
+   int ntt=0;    // term offset
+   for(int n=0;n<num_ranges;++n) {
+      int nt = fits[n].getNumTerms();
+
+      // sweep over the points of this segment
+      inTFit_Fit* fit = &( fits[n] );
+      long is = idx_lo[n], ie = idx_hi[n];
+      for(long i=is;i<ie;++i) {
+         double t = x[i];
+
+         for(int m=0;m<nt;++m) {
+#ifdef _DEBUG3_
+            if( i == is )
+               for(int k=0;k<ntt;++k)
+                  fprintf( stdout, "- ");
+#endif
+            for(int k=0;k<nt;++k) {
+#ifdef _DEBUG3_
+               if( i == is )
+                  fprintf( stdout, "X ");
+#endif
+               // assign matrix element
+               double ee = fit->evalProd( m, k, t );
+               amat[ ntt*ne + ne*m + ntt + k ] = ee;
+            }
+            // assign RHS vector element
+            double rr = y[i] * fit->evalTerm( m, t );
+            rhs[ ntt + m ] = rr;
+#ifdef _DEBUG3_
+            if( i == is )
+               for(int k=ntt+nt;k<ne;++k)
+                  fprintf( stdout, "- ");
+            if( i == is )
+               fprintf( stdout, "\n");
+#endif
+         }
+
+      }
+
+      // advance term offset
+      ntt += nt;
+   }
+#ifdef _DEBUG3_
+   fprintf( stdout, " [%s]  Linear system \n",CLASS);
+   for(int n=0;n<ne;++n) {
+      for(int m=0;m<ne;++m) {
+         fprintf( stdout, " %16.9e", amat[ n*ne + m ] );
+      }
+      fprintf( stdout, "    %16.9e\n", rhs[ n ] );
+   }
+#endif
 
    return 0;
 }

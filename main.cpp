@@ -68,7 +68,7 @@ int main( int argc, char *argv[] )
 
    mfit.storeData( size, x, y );
 
-   mfit.form();
+   mfit.compute();
 
   printf("========================= LOOP ==========================\n");
 //}

@@ -134,7 +134,7 @@ class inTFit_MultiFit {
    void clear( void );
    int storeData( long size, const double* x_, const double* y_ );
 
-   int form( void );
+   int compute( void );
 
  protected:
 
@@ -152,6 +152,7 @@ class inTFit_MultiFit {
    std::vector< double > x,y;
 
    int findIndices();
+   int form( void );
 
    int ne;
    double *amat, *rhs;
