@@ -729,6 +729,20 @@ void inTFit_MultiFit::clear( void )
    x.clear();
    y.clear();
    num_data = 0;
+
+   ne = 0;
+   if( amat != NULL ) {
+      free( amat );
+      amat = NULL;
+   }
+   if( rhs != NULL ) {
+      free( rhs );
+      rhs = NULL;
+   }
+   if( tp != NULL ) {
+      free( tp );
+      tp = NULL;
+   }
 }
 
 
