@@ -68,11 +68,15 @@ int main( int argc, char *argv[] )
    fit1.clear();
 /**/
 
+   mfit.addConstraint( CONSTRAINT_VALUE, 0, 1, 1.0, 0.0, xlow );
    mfit.finalize();
+   // the following should just print an error and make no changes
+   mfit.addConstraint( CONSTRAINT_VALUE, 0, 1, 1.0, 0.0, xlow ); // ERROR
 
    mfit.storeData( size, x, y );
 
    mfit.compute();
+   mfit.clear();
 
   printf("========================= LOOP ==========================\n");
 //}

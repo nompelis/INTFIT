@@ -568,6 +568,8 @@ inTFit_MultiFit::inTFit_MultiFit()
    amat = NULL;
    rhs = NULL;
    tp = NULL;
+
+   num_con = 0;
 }
 
 
@@ -644,6 +646,7 @@ int inTFit_MultiFit::finalize()
    for(int n=0;n<num_ranges;++n) {
       ne += fits[n].getNumTerms();
    }
+   // NEED TO AUGMENT BY NUMBER OF CONSTRAINTS HERE
 #ifdef _DEBUG_
    fprintf( stdout, " [%s]  Using %d terms \n",CLASS, ne );
 #endif
@@ -710,6 +713,45 @@ int inTFit_MultiFit::compute( void )
 }
 
 
+int inTFit_MultiFit::addConstraint( int type_, int idx1, int idx2,
+                                    double sign2, double rhs_, double x )
+{
+#ifdef _DEBUG_
+   fprintf( stdout, " [%s]  Adding constraint \n",CLASS);
+#endif
+   if( ne != 0 || amat != NULL || rhs != NULL || tp != NULL ) {
+      fprintf( stdout, " Error: system already allocated! \n");
+      return 1;
+   }
+
+   if( idx1 == idx2 || idx1 > num_ranges || idx2 > num_ranges ) {
+      fprintf( stdout, " Error: fit indices incorrect: %d %d \n", idx1, idx2 );
+      return 2;
+   }
+
+   if( type_ == CONSTRAINT_NULL ) {
+      // Allow for the possilibity of a constraint to be placed here via an
+      // automated (programmatic) manner and do nothing.
+      return 0;
+   }
+
+   struct inTFit_constraint_s c = {
+              .type = type_, .fit_idx1 = idx1, .fit_idx2 = idx2,
+              .sign2 = sign2, .rhs = rhs_, .x = x
+   };
+#ifdef _DEBUG_
+   fprintf( stdout, "  Constraint: type \"%d\", fit1 \"%d\", fit2 \"%d\" \n",
+            c.type, c.fit_idx1, c.fit_idx2 );
+   fprintf( stdout, "              sign %3.1lf, RHS= %16.9e, at x= %lf \n",
+            c.sign2, c.rhs, c.x );
+#endif
+   constraints.push_back( c );
+   ++num_con;
+
+   return 0;
+}
+
+
 void inTFit_MultiFit::clear( void )
 {
 #ifdef _DEBUG_
@@ -721,6 +763,8 @@ void inTFit_MultiFit::clear( void )
    idx_lo.clear();
    idx_hi.clear();
    num_ranges = 0;
+   constraints.clear();
+   num_con = 0;
 
    xs = -9.9e99;
    xe = -9.9e99;

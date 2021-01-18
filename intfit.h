@@ -54,6 +54,12 @@ enum inTerm_type {
    TERM_EXP,
 };
 
+enum inConstraint_type {
+   CONSTRAINT_NULL=0,
+   CONSTRAINT_VALUE=1,
+   CONSTRAINT_DERIVATIVE=2,
+};
+
 
 //
 // object representing a term in the approximation
@@ -136,6 +142,16 @@ class inTFit_MultiFit {
 
    int compute( void );
 
+   struct inTFit_constraint_s {
+      int type;                  // type (from enums) of the constraint
+      int fit_idx1, fit_idx2;    // index of fits involved in the equality
+      double sign2;              // sign of the second fit's term
+      double rhs;                // RHS value for the inhomogeneous problem
+      double x;
+   };
+   int addConstraint( int type, int idx1, int idx2,
+                      double sign2, double rhs, double x );
+
  protected:
 
  private:
@@ -147,6 +163,8 @@ class inTFit_MultiFit {
    std::vector< double > highs;
    std::vector< long > idx_lo, idx_hi;
    int num_ranges;
+   std::vector< struct inTFit_constraint_s > constraints;
+   int num_con;
 
    long num_data;
    std::vector< double > x,y;
