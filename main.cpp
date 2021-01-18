@@ -50,19 +50,23 @@ int main( int argc, char *argv[] )
 
    inTFit_Fit fit1;
    fit1.setBounds( xlow, xhigh/2.0 );
-   fit1.setTerms( "X X^2  X^3 X^4 LN(X) X^5 X^-1" );
+// fit1.setTerms( "X X^2  X^3 X^4 LN(X) X^5 X^-1" );
+   fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 " );
+// fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 X^7 X^8 X^9 X^10 " );
    fit1.finalize();
    printf("Number of terms: %d \n", fit1.getNumTerms() );
    mfit.addFit( fit1 );
    fit1.clear();
 
+/**/
    fit1.setBounds( xhigh/2.0, xhigh );
-   fit1.setTerms( "X   X^2 LOG(X)  " );
+// fit1.setTerms( "X   X^2 LOG(X)  " );
+   fit1.setTerms( "X X^2 " );
    fit1.finalize();
-   printf("TEST RESULT: %lf \n", fit1.evalProd( 0, 2, 1.0 ) ); // HACK
    printf("Number of terms: %d \n", fit1.getNumTerms() );
    mfit.addFit( fit1 );
    fit1.clear();
+/**/
 
    mfit.finalize();
 

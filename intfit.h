@@ -95,7 +95,7 @@ class inTFit_Fit {
    int getNumTerms( void ) const;
    int finalize();
    void clear( void );
-   double evalProd( int i, int j, double t ) const;
+   __inline double evalProd( int i, int j, double t ) const;
    __inline double evalTerm( int i, double t ) const;
 
  protected:

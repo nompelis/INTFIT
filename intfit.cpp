@@ -532,7 +532,7 @@ int inTFit_Fit::registerTerm( inTerm_type type_, int order_ )
 }
 
 
-double inTFit_Fit::evalProd( int i, int j, double t ) const
+__inline double inTFit_Fit::evalProd( int i, int j, double t ) const
 {
    double result = terms[i].eval( t ) * terms[j].eval( t );
 
