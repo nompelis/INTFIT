@@ -646,7 +646,7 @@ int inTFit_MultiFit::finalize()
    for(int n=0;n<num_ranges;++n) {
       ne += fits[n].getNumTerms();
    }
-   // NEED TO AUGMENT BY NUMBER OF CONSTRAINTS HERE
+   ne += num_con;
 #ifdef _DEBUG_
    fprintf( stdout, " [%s]  Using %d terms \n",CLASS, ne );
 #endif
@@ -707,7 +707,34 @@ int inTFit_MultiFit::compute( void )
    fprintf( stdout, " [%s]  Solution \n",CLASS);
    for(int n=0;n<ne;++n) fprintf( stdout, " n=%d   %16.9e \n", n, rhs[n] );
 #endif
-
+#ifdef _DEBUG_
+   // The following is so that curves can be ploted with GnuPlot.
+   // When plotting with naive x and y ranges, polynomials that are segmented
+   // and not constrained to work with eachother will potentially overshoot
+   // and make the plot weird. Also, for simplicity it works only for monomials
+   // that are part of a polynomial (powers of x).
+   fprintf( stdout, " [%s]  GNUPLOT command (fill-in powers)\n",CLASS);
+   fprintf( stdout, "### modify terms as needed \n");
+   fprintf( stdout, "set xrange [%lf:%lf] \n", xs,xe );
+   double ys = 9.9e99, ye = -9.9e99;
+   for(long n=0;n<num_data;++n) {
+      if( ys > y[n] ) ys = y[n];
+      if( ye < y[n] ) ye = y[n];
+   }
+   fprintf( stdout, "set yrange [%lf:%lf] \n", ys,ye );
+   fprintf( stdout, " plot \"data.dat\" w p, \\\n" );
+   int ntt=0;
+   for(int n=0;n<num_ranges;++n) {
+      for(int m=0;m<fits[n].getNumTerms();++m) {
+         if( m < fits[n].getNumTerms()-1 ) {
+            fprintf( stdout, " %16.9e * x**%d + \\\n", rhs[ntt+m],0 );
+         } else {
+            fprintf( stdout, " %16.9e * x**%d \n", rhs[ntt+m],0 );;
+         }
+      }
+      ntt += fits[n].getNumTerms();
+   }
+#endif
 
    return 0;
 }
@@ -924,6 +951,52 @@ int inTFit_MultiFit::form( void )
       // advance term offset
       ntt += nt;
    }
+
+   // sweep over constraints
+#ifdef _DEBUG3_
+   fprintf( stdout, " [%s]  Number of constraints: %d \n",CLASS, num_con );
+#endif
+   for(int n=0;n<num_con;++n) {
+      int idx1 = constraints[n].fit_idx1, idx2 = constraints[n].fit_idx2;
+      double sign2 = constraints[n].sign2, t = constraints[n].x;
+
+      // term offsets of fits (unforunately I am using a linear sweep)
+      int io1=0, io2=0;
+      for(int m=0;m<idx1;++m) io1 += fits[m].getNumTerms();
+      for(int m=0;m<idx2;++m) io2 += fits[m].getNumTerms();
+      int nt1 = fits[idx1].getNumTerms(), nt2 = fits[idx2].getNumTerms();
+
+#ifdef _DEBUG_
+      fprintf( stdout, "    Constraint: %d   term: %d \n", n, ntt );
+      fprintf( stdout, "    Fit indices: %d \& %d \n", idx1, idx2 );
+      fprintf( stdout, "    Term offsets: %d \& %d \n", io1, io2 );
+#endif
+      switch( constraints[n].type ) {
+       case CONSTRAINT_NULL:
+       break;
+ 
+       case CONSTRAINT_VALUE:
+         for(int m=0;m<nt1;++m) {
+            // row of constraint equation; columns of the approximation of fit1
+            amat[ (ntt + n)*ne + io1 + m ] = fits[idx1].evalTerm( m, t );
+            // row of term of approximation fit1; column of constraint
+            amat[ (io1 + m)*ne + ntt + n ] = fits[idx1].evalTerm( m, t );
+         }
+         for(int m=0;m<nt2;++m) {
+            // row of constraint equation; columns of the approximation of fit1
+            amat[ (ntt + n)*ne + io2 + m ] = fits[idx2].evalTerm( m, t ) *sign2;
+            // row of term of approximation fit2; column of constraint
+            amat[ (io2 + m)*ne + ntt + n ] = fits[idx2].evalTerm( m, t ) *sign2;
+         }
+         rhs[ ntt + n ] = constraints[n].rhs;
+       break;
+       case CONSTRAINT_DERIVATIVE:
+         // NOT YET...
+
+       break;
+      }
+   }
+
 #ifdef _DEBUG3_
    fprintf( stdout, " [%s]  Linear system \n",CLASS);
    for(int n=0;n<ne;++n) {
