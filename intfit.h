@@ -103,6 +103,7 @@ class inTFit_Fit {
    void clear( void );
    __inline double evalProd( int i, int j, double t ) const;
    __inline double evalTerm( int i, double t ) const;
+   __inline double evalTermDeriv( int i, double t ) const;
 
  protected:
 

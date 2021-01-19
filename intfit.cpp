@@ -569,6 +569,12 @@ __inline double inTFit_Fit::evalTerm( int i, double t ) const
 }
 
 
+__inline double inTFit_Fit::evalTermDeriv( int i, double t ) const
+{
+   return terms[i].evalDer( t );
+}
+
+
 //
 // Multi-fit class
 //
