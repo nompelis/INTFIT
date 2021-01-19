@@ -51,8 +51,9 @@ int main( int argc, char *argv[] )
    inTFit_Fit fit1;
    fit1.setBounds( xlow, xhigh/2.0 );
 // fit1.setTerms( "X X^2  X^3 X^4 LN(X) X^5 X^-1" );
-   fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 " );
+///fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 " );
 // fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 X^7 X^8 X^9 X^10 " );
+   fit1.setTerms( "1 X" );
    fit1.finalize();
    printf("Number of terms: %d \n", fit1.getNumTerms() );
    mfit.addFit( fit1 );
@@ -61,17 +62,19 @@ int main( int argc, char *argv[] )
 /**/
    fit1.setBounds( xhigh/2.0, xhigh );
 // fit1.setTerms( "X   X^2 LOG(X)  " );
-   fit1.setTerms( "X X^2 " );
+///fit1.setTerms( "X X^2 " );
+   fit1.setTerms( "1 " );
    fit1.finalize();
    printf("Number of terms: %d \n", fit1.getNumTerms() );
    mfit.addFit( fit1 );
    fit1.clear();
 /**/
 
-   mfit.addConstraint( CONSTRAINT_VALUE, 0, 1, 1.0, 0.0, xlow );
+   mfit.addConstraint( CONSTRAINT_VALUE, 0,1, -1.0, 0.0, xhigh/2.0 );
+// mfit.addConstraint( CONSTRAINT_VALUE, 0,0,  0.0, 100.0, 0.0 );
    mfit.finalize();
    // the following should just print an error and make no changes
-   mfit.addConstraint( CONSTRAINT_VALUE, 0, 1, 1.0, 0.0, xlow ); // ERROR
+   mfit.addConstraint( CONSTRAINT_VALUE, 0, 1, 1.0, 0.0, xlow/2.0 ); // ERROR
 
    mfit.storeData( size, x, y );
 
