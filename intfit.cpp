@@ -1020,8 +1020,21 @@ int inTFit_MultiFit::form( void )
          rhs[ ntt + n ] = constraints[n].rhs;
        break;
        case CONSTRAINT_DERIVATIVE:
-         // NOT YET...
-
+         for(int m=0;m<nt1;++m) {
+            // row of constraint equation; columns of the approximation of fit1
+            amat[ (ntt + n)*ne + io1 + m ] = fits[idx1].evalTermDeriv( m, t );
+            // row of term of approximation fit1; column of constraint
+            amat[ (io1 + m)*ne + ntt + n ] = fits[idx1].evalTermDeriv( m, t );
+         }
+         for(int m=0;m<nt2;++m) {
+            // row of constraint equation; columns of the approximation of fit1
+            amat[ (ntt + n)*ne + io2 + m ] = fits[idx2].evalTermDeriv( m, t )
+                                           * sign2;
+            // row of term of approximation fit2; column of constraint
+            amat[ (io2 + m)*ne + ntt + n ] = fits[idx2].evalTermDeriv( m, t )
+                                           * sign2;
+         }
+         rhs[ ntt + n ] = constraints[n].rhs;
        break;
       }
    }
