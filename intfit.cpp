@@ -1053,6 +1053,62 @@ int inTFit_MultiFit::form( void )
 }
 
 
+int inTFit_MultiFit::dumpFitData( char* filebase, int iop ) const
+{
+#ifdef _DEBUG_
+   fprintf( stdout, " [%s]  Dumping data from fit(s)...\n",CLASS);
+#endif
+   FILE *fp;
+   char filename[256];
+   int ntt=0;
+
+   for(int n=0;n<num_ranges;++n) {
+      sprintf( filename, "%s_%.5d.dat", filebase, n );
+      fp = fopen( filename, "w" );
+      if( fp == NULL ) {
+         return -1;
+      }
+
+      fprintf( fp, "### Data fited for range %d ### \n", n );
+      long is = idx_lo[n], ie = idx_hi[n];
+      if( iop != 0 ) {
+         is = 0, ie = num_data;
+      }
+      for(long i=is;i<ie;++i) {
+         double t = x[i], p = 0.0;
+         for(int m=0;m<fits[n].getNumTerms();++m) {
+            p += fits[n].evalTerm( m, t ) * rhs[ ntt + m ];
+         }
+         fprintf( fp, " %16.9e %16.9e \n", t, p );
+      }
+      fclose( fp );
+
+      ntt += fits[n].getNumTerms();
+   }
+#ifdef _DEBUG_
+   fprintf( stdout, " [%s]  GNUPLOT command \n",CLASS);
+   fprintf( stdout, "set xrange [%lf:%lf] \n", xs,xe );
+   double ys = 9.9e99, ye = -9.9e99;
+   for(long n=0;n<num_data;++n) {
+      if( ys > y[n] ) ys = y[n];
+      if( ye < y[n] ) ye = y[n];
+   }
+   fprintf( stdout, "set yrange [%lf:%lf] \n", ys,ye );
+   fprintf( stdout, "plot \"data.dat\" w p, \\\n");
+   for(int n=0;n<num_ranges;++n) {
+      sprintf( filename, "%s_%.5d.dat", filebase, n );
+      if( n < num_ranges-1 ) {
+         fprintf( stdout, "   \"%s\" w l, \\\n", filename );
+      } else {
+         fprintf( stdout, "   \"%s\" w l \n", filename );
+      }
+   }
+#endif
+
+   return 0;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

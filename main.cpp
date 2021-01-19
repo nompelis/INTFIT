@@ -80,6 +80,7 @@ int main( int argc, char *argv[] )
    mfit.storeData( size, x, y );
 
    mfit.compute();
+   mfit.dumpFitData( (char*) "crap", 1 );
    mfit.clear();
 
   printf("========================= LOOP ==========================\n");

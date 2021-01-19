@@ -143,6 +143,8 @@ class inTFit_MultiFit {
 
    int compute( void );
 
+   int dumpFitData( char* filebase, int iop ) const;
+
    struct inTFit_constraint_s {
       int type;                  // type (from enums) of the constraint
       int fit_idx1, fit_idx2;    // index of fits involved in the equality
