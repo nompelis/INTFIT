@@ -165,6 +165,29 @@ double inTFit_Term::eval( double t ) const
 double inTFit_Term::evalDer( double t ) const
 {
    double result = 0;
+   switch( type ) {
+    case( TERM_NULL ):
+       result = 0.0;
+    break;
+    case( TERM_CONST ):
+       result = 0.0;
+    break;
+    case( TERM_MONOMIAL ):
+       if( order == 0 ) {
+          result = 0.0;
+       } else if( order == 1 ) {
+          result = 1.0;
+       } else {
+          result = pow( t, (double) (order - 1) )*((double) order);
+       }
+    break;
+    case( TERM_EXP ):
+       result = exp( t );
+    break;
+    case( TERM_LOG ):
+       result = 1.0/t;
+    break;
+   }
 
    return result;
 }
