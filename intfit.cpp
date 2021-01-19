@@ -361,6 +361,18 @@ int inTFit_Fit::finalize()
 }
 
 
+inTerm_type inTFit_Fit::getTermType( int i ) const
+{
+   return terms[i].getType();
+}
+
+
+int inTFit_Fit::getTermOrder( int i ) const
+{
+   return terms[i].getOrder();
+}
+
+
 void inTFit_Fit::clear( void )
 {
 #ifdef _DEBUG_
@@ -765,6 +777,8 @@ int inTFit_MultiFit::compute( void )
    }
 #endif
 
+   display();
+
    return 0;
 }
 
@@ -1106,6 +1120,53 @@ int inTFit_MultiFit::dumpFitData( char* filebase, int iop ) const
 #endif
 
    return 0;
+}
+
+
+void inTFit_MultiFit::display( void )
+{
+   fprintf( stdout, "=====================================================\n");
+   fprintf( stdout, "| Global range: %18.9e  <-> %16.9e \n", xs, xe );
+   fprintf( stdout, "| Number of total points: %ld \n", num_data );
+   fprintf( stdout, "| Segments: %d   Constraints: %d \n", num_ranges, num_con);
+   fprintf( stdout, "| Segments that form of the approximation \n");
+
+   int ntt=0;
+   for(int n=0;n<num_ranges;++n) {
+      fprintf( stdout, "| - Segment: %d \n", n );
+      fprintf( stdout, "|   Range: %16.9e  <-> %16.9e \n", lows[n], highs[n] );
+      fprintf( stdout, "|   Indices: %ld <-> %ld \n", idx_lo[n], idx_hi[n] );
+      fprintf( stdout, "|   Functional form: \n");
+      for(int m=0;m<fits[n].getNumTerms();++m) {
+         fprintf( stdout, "|          %16.9e * ", rhs[ ntt + m ] );
+
+         switch( fits[n].getTermType( m ) ) {
+          case TERM_NULL:
+          break;
+          case TERM_CONST:
+            fprintf( stdout, "1" );
+          break;
+          case TERM_MONOMIAL:
+            fprintf( stdout, "x^%d", fits[n].getTermOrder( m ) );
+          break;
+          case TERM_LOG:
+            fprintf( stdout, "log(x)" );
+          break;
+          case TERM_EXP:
+            fprintf( stdout, "xpg(x)" );
+          break;
+         }
+
+         if( m != fits[n].getNumTerms()-1 ) {
+            fprintf( stdout, " +\n" );
+         } else {
+            fprintf( stdout, "\n" );
+         }
+      }
+      ntt += fits[n].getNumTerms();
+   }
+
+   fprintf( stdout, "=====================================================\n");
 }
 
 

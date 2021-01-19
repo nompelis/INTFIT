@@ -104,6 +104,8 @@ class inTFit_Fit {
    __inline double evalProd( int i, int j, double t ) const;
    __inline double evalTerm( int i, double t ) const;
    __inline double evalTermDeriv( int i, double t ) const;
+   inTerm_type getTermType( int i ) const;
+   int getTermOrder( int i ) const;
 
  protected:
 
@@ -174,6 +176,7 @@ class inTFit_MultiFit {
 
    int findIndices();
    int form( void );
+   void display( void );
 
    int ne;
    double *amat, *rhs, *tp;
