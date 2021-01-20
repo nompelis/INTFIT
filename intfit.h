@@ -156,6 +156,7 @@ class inTFit_MultiFit {
    };
    int addConstraint( int type, int idx1, int idx2,
                       double sign2, double rhs, double x );
+   int addConstraint( int type, int idx, double rhs, double x );
 
  protected:
 

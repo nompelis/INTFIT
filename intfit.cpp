@@ -822,6 +822,43 @@ int inTFit_MultiFit::addConstraint( int type_, int idx1, int idx2,
 }
 
 
+int inTFit_MultiFit::addConstraint( int type_, int idx, double rhs_, double x )
+{
+#ifdef _DEBUG_
+   fprintf( stdout, " [%s]  Adding constraint (single fit) \n",CLASS);
+#endif
+   if( ne != 0 || amat != NULL || rhs != NULL || tp != NULL ) {
+      fprintf( stdout, " Error: system already allocated! \n");
+      return 1;
+   }
+
+   if( idx > num_ranges ) {
+      fprintf( stdout, " Error: fit index incorrect: %d \n", idx );
+      return 2;
+   }
+
+   if( type_ == CONSTRAINT_NULL ) {
+      // Allow for the possilibity of a constraint to be placed here via an
+      // automated (programmatic) manner and do nothing.
+      return 0;
+   }
+
+   struct inTFit_constraint_s c = {
+              .type = type_, .fit_idx1 = idx, .fit_idx2 = -1,
+              .sign2 = 0.0, .rhs = rhs_, .x = x
+   };
+#ifdef _DEBUG_
+   fprintf( stdout, "  Constraint: type \"%d\", fit \"%d\" \n",
+            c.type, c.fit_idx1);
+   fprintf( stdout, "              RHS= %16.9e, at x= %lf \n", c.rhs, c.x );
+#endif
+   constraints.push_back( c );
+   ++num_con;
+
+   return 0;
+}
+
+
 void inTFit_MultiFit::clear( void )
 {
 #ifdef _DEBUG_
@@ -1025,7 +1062,7 @@ int inTFit_MultiFit::form( void )
             // row of term of approximation fit1; column of constraint
             amat[ (io1 + m)*ne + ntt + n ] = fits[idx1].evalTerm( m, t );
          }
-         for(int m=0;m<nt2;++m) {
+         if( idx2 != -1 ) for(int m=0;m<nt2;++m) {
             // row of constraint equation; columns of the approximation of fit1
             amat[ (ntt + n)*ne + io2 + m ] = fits[idx2].evalTerm( m, t ) *sign2;
             // row of term of approximation fit2; column of constraint
@@ -1040,7 +1077,7 @@ int inTFit_MultiFit::form( void )
             // row of term of approximation fit1; column of constraint
             amat[ (io1 + m)*ne + ntt + n ] = fits[idx1].evalTermDeriv( m, t );
          }
-         for(int m=0;m<nt2;++m) {
+         if( idx2 != -1 ) for(int m=0;m<nt2;++m) {
             // row of constraint equation; columns of the approximation of fit1
             amat[ (ntt + n)*ne + io2 + m ] = fits[idx2].evalTermDeriv( m, t )
                                            * sign2;
