@@ -6,24 +6,56 @@
 #include "intfit.h"
 
 
-int make_data( long* size_, double** x_, double** y_, double xl, double xh )
+int read_data( long* size_, double** x_, double** y_ )
 {
-   long size = 100;
-   double *x,*y;
+   long size;
+   double *x=NULL,*y=NULL;
+   size_t mem_size=0;
 
-   x = (double *) malloc( ((size_t) size) * sizeof(double) );
-   y = (double *) malloc( ((size_t) size) * sizeof(double) );
-
-   for(long n=0;n<size;++n) {
-      x[n] = ((double) n)/((double) size) * (xh - xl) + xl;
-      y[n] = 100.0 + x[n]/100.0 + 10.0*sin( x[n]/1000.0 );
+   FILE *fp = fopen( "data.dat", "r" );
+   if( fp == NULL ) {
+      fprintf( stdout, "Error opening data file \n");
+      return 1;
    }
 
-   FILE *fp = fopen( "data.dat", "w" );
-   for(long n=0;n<size;++n) {
-      fprintf( fp, " %16.9e %16.9e \n", x[n], y[n] );
+   size = 0;
+   while( 1 ) {
+      char string[100];
+
+      if( size == ((long) mem_size) ) {
+         double *p;
+         p = (double *) realloc( x, (mem_size+100)*sizeof(double) );
+         if( p == NULL ) {
+            fprintf( stdout, "Error (re)allocating memory \n");
+            free( x );
+            free( y );
+            return -1;
+         }
+         x = p;
+
+         p = (double *) realloc( y, (mem_size+100)*sizeof(double) );
+         if( p == NULL ) {
+            fprintf( stdout, "Error (re)allocating memory \n");
+            free( x );
+            free( y );
+            return -2;
+         }
+         y = p;
+
+         mem_size += 100;
+         fprintf( stdout, "Reallocation made (size: %ld) \n",size);
+      }
+
+      fgets( string, 100, fp );
+      if( feof( fp ) ) break;
+   // fprintf( stdout, "STRING: \"%s\"\n", string );
+      sscanf( string, "%lf %lf", &(x[size]), &(y[size]) );
+      ++size;
    }
    fclose( fp );
+
+
+
 
    *size_ = size;
    *x_ = x;
@@ -35,58 +67,42 @@ int make_data( long* size_, double** x_, double** y_, double xl, double xh )
 
 int main( int argc, char *argv[] )
 {
-   double xlow = 1.0;
-   double xhigh = 20000.0;
-
    long size;
    double *x, *y;
-   (void) make_data( &size, &x, &y, xlow, xhigh );
-
-//while(1) {
+   (void) read_data( &size, &x, &y );
 
    inTFit_MultiFit mfit;
 
+   double xlow, xhigh;
+   xlow = x[0], xhigh = x[size-1];    // pick these numbers from the data
    mfit.setBounds( xlow, xhigh );
 
    inTFit_Fit fit1;
-   fit1.setBounds( xlow, xhigh/2.0 );
-// fit1.setTerms( "X X^2  X^3 X^4 LN(X) X^5 X^-1" );
-   fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 " );
-// fit1.setTerms( "1 X X^2 X^3 X^4 X^5 X^6 X^7 X^8 X^9 X^10 " );
-// fit1.setTerms( "1 X" );
+   fit1.setBounds( xlow, xhigh );
+   fit1.setTerms( "1 X X^2 X^3 X^4 X^5 " );
    fit1.finalize();
    printf("Number of terms: %d \n", fit1.getNumTerms() );
    mfit.addFit( fit1 );
    fit1.clear();
 
-/**/
-   fit1.setBounds( xhigh/2.0, xhigh );
-// fit1.setTerms( "X   X^2 LOG(X)  " );
-   fit1.setTerms( "X X^2 " );
-// fit1.setTerms( "1 " );
-   fit1.finalize();
-   printf("Number of terms: %d \n", fit1.getNumTerms() );
-   mfit.addFit( fit1 );
-   fit1.clear();
-/**/
+   // form the derivative on the left numerically end from the data
+   double dval = (y[1] - y[0])/(x[1] - x[0]);
+   mfit.addConstraint( CONSTRAINT_DERIVATIVE, 0, dval, xlow );
+   // form the derivative on the right numerically end from the data
+          dval = (y[size-1] - y[size-2])/(x[size-1] - x[size-2]);
+   mfit.addConstraint( CONSTRAINT_DERIVATIVE, 0, dval, xhigh );
+   // add constrain on the left side of the fit to match the data
+   dval = y[0];
+   mfit.addConstraint( CONSTRAINT_VALUE, 0, dval, xlow );
 
-   mfit.addConstraint( CONSTRAINT_VALUE, 0,1, -1.0, 0.0, xhigh/2.0 );
-   mfit.addConstraint( CONSTRAINT_DERIVATIVE, 0,1, -1.0, 0.0, xhigh/2.0 );
-// mfit.addConstraint( CONSTRAINT_VALUE, 0,0,  0.0, 100.0, 0.0 );
    mfit.finalize();
-   // the following should just print an error and make no changes
-   mfit.addConstraint( CONSTRAINT_VALUE, 0, 1, 1.0, 0.0, xlow/2.0 ); // ERROR
 
    mfit.storeData( size, x, y );
 
    mfit.compute();
-   mfit.dumpFitData( (char*) "crap", 1 );
+   mfit.dumpFitData( (char*) "data", 1 );
    mfit.clear();
-
-  printf("========================= LOOP ==========================\n");
-//}
 
    return(0);
 }
-
 
